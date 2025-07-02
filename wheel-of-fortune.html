@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>عجلة الحظ للمتابعين</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #f8f8f8;
+      text-align: center;
+      padding-top: 30px;
+    }
+    h1 {
+      color: #444;
+    }
+    canvas {
+      margin: 20px auto;
+      display: block;
+    }
+    #spin {
+      padding: 12px 25px;
+      font-size: 18px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    #result {
+      font-size: 22px;
+      margin-top: 20px;
+      color: #d63384;
+      font-weight: bold;
+    }
+    #winner-name {
+      font-size: 24px;
+      color: #007bff;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎉 عجلة الحظ - مسابقة إنستغرام 🎉</h1>
+
+<canvas id="wheel" width="400" height="400"></canvas>
+<button id="spin">اضغط لتدوير العجلة</button>
+
+<div id="result"></div>
+<div id="winner-name"></div>
+
+<audio id="tick-sound" src="https://freesound.org/data/previews/341/341695_626119-lq.mp3" preload="auto"></audio>
+
+<script>
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const segments = ['فائز', 'خسر', 'خسر', 'خسر', 'خسر', 'خسر', 'خسر', 'خسر'];
+  const colors = ['#4CAF50', '#FF6B6B', '#FF6B6B', '#FF6B6B', '#FF6B6B', '#FF6B6B', '#FF6B6B', '#FF6B6B'];
+  const angle = 2 * Math.PI / segments.length;
+  let rotation = 0;
+  let spinning = false;
+  const tickSound = document.getElementById('tick-sound');
+  const followers = ['@user1', '@user2', '@user3', '@user4', '@user5', '@user6', '@user7', '@user8'];
+
+  function drawWheel() {
+    for (let i = 0; i < segments.length; i++) {
+      const startAngle = i * angle + rotation;
+      const endAngle = startAngle + angle;
+
+      ctx.beginPath();
+      ctx.moveTo(200, 200);
+      ctx.arc(200, 200, 180, startAngle, endAngle);
+      ctx.fillStyle = colors[i];
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.save();
+      ctx.translate(200, 200);
+      ctx.rotate(startAngle + angle / 2);
+      ctx.textAlign = "right";
+      ctx.fillStyle = "#fff";
+      ctx.font = "18px Arial";
+      ctx.fillText(segments[i], 160, 10);
+      ctx.restore();
+    }
+
+    // المؤشر
+    ctx.beginPath();
+    ctx.moveTo(200, 10);
+    ctx.lineTo(190, 30);
+    ctx.lineTo(210, 30);
+    ctx.fillStyle = "#000";
+    ctx.fill();
+  }
+
+  drawWheel();
+
+  document.getElementById('spin').addEventListener('click', () => {
+    if (spinning) return;
+    spinning = true;
+    let spinAngle = Math.random() * 360 + 1440; // من 4 إلى 5 دورات
+    let duration = 4000; 
+    let start = performance.now();
+    let lastSoundTime = 0;
+
+    function animate(time) {
+      let progress = (time - start) / duration;
+      if (progress > 1) progress = 1;
+      rotation = (spinAngle * progress) * Math.PI / 180;
+      ctx.clearRect(0, 0, 400, 400);
+      drawWheel();
+
+      if (time - lastSoundTime > 50) {
+        tickSound.currentTime = 0;
+        tickSound.play();
+        lastSoundTime = time;
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        spinning = false;
+        showResult();
+      }
+    }
+
+    requestAnimationFrame(animate);
+  });
+
+  function showResult() {
+    const finalAngle = rotation % (2 * Math.PI);
+    const selected = Math.floor(((2 * Math.PI) - finalAngle + angle / 2) % (2 * Math.PI) / angle);
+    const resultText = segments[selected];
+    const randomFollower = followers[Math.floor(Math.random() * followers.length)];
+
+    document.getElementById('result').innerText = `النتيجة: ${resultText}`;
+    if (resultText === 'فائز') {
+      document.getElementById('winner-name').innerText = `🎁 الفائز: ${randomFollower}`;
+    } else {
+      document.getElementById('winner-name').innerText = '';
+    }
+  }
+</script>
+
+</body>
+</html>
